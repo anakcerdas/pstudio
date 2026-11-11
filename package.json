@@ -1,0 +1,13 @@
+{
+  "name": "p-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "P STUDIO portfolio — interactive pieces, AI films, and a tiny built-in CMS.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

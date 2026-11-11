@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>P STUDIO CMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+  <!-- LOGIN -->
+  <main class="login" id="login" hidden>
+    <form class="login-card" id="login-form">
+      <div class="logo big"><span class="t">P</span> <span class="t">S</span>TUDIO</div>
+      <p>Content manager</p>
+      <input type="password" id="password" placeholder="Password" autocomplete="current-password" required autofocus>
+      <button class="btn primary" type="submit">Log in</button>
+      <div class="error" id="login-error"></div>
+    </form>
+  </main>
+
+  <!-- APP -->
+  <div id="app" hidden>
+    <header class="top">
+      <div class="logo"><span class="t">P</span> <span class="t">S</span>TUDIO <small>CMS</small></div>
+      <nav class="tabs" id="tabs">
+        <button data-tab="apps" class="on">Interactive</button>
+        <button data-tab="videos">Films</button>
+        <button data-tab="profile">Profile &amp; contact</button>
+        <button data-tab="inquiries">Inquiries <span class="tab-count" id="inq-count"></span></button>
+      </nav>
+      <div class="top-actions">
+        <a class="btn ghost" href="/" target="_blank">View site ↗</a>
+        <button class="btn primary" id="save" disabled>Saved</button>
+        <button class="btn ghost" id="logout" title="Log out">Log out</button>
+      </div>
+    </header>
+    <main class="panel" id="panel"></main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="dialog-back" id="dialog" hidden>
+    <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dlg-title" aria-describedby="dlg-msg">
+      <h3 id="dlg-title"></h3>
+      <p id="dlg-msg"></p>
+      <div class="dialog-actions">
+        <button class="btn ghost" id="dlg-cancel">Cancel</button>
+        <button class="btn danger-fill" id="dlg-ok">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/shared.js"></script>
+  <script src="/admin/admin.js"></script>
+</body>
+</html>

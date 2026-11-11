@@ -1,0 +1,16 @@
+# Everything the CMS saves (content, backups, uploaded apps & images).
+# It lives on the server; deploying new code must never overwrite it.
+storage/
+
+# Private notes and secrets — never upload
+loginpass jangan diupload.txt
+*.secret.txt
+.env
+.env.*
+
+# Local tooling
+node_modules/
+.claude/
+*.log
+.DS_Store
+Thumbs.db
