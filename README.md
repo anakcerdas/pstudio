@@ -71,7 +71,7 @@ The CMS writes files to disk, so you need a host with a **persistent disk**, and
 - **Railway / Fly.io**: attach a volume and set `STORAGE_DIR` to its mount path.
 - **Any VPS or cPanel Node.js host**: the default `storage/` next to `server.js` is fine; just don't overwrite it when uploading new code.
 
-**First launch:** deploy the code, then copy your local `storage/` folder to the host's storage location once (SFTP/WinSCP, or the host's file browser). From then on, edit through `/admin` on the live site.
+**First launch:** deploy the code, log in to `/admin` on the live site, and in *Profile & contact → Import content* choose your local `storage` folder. It uploads your posts, settings, images, apps and contact messages (not the backups). From then on, edit through `/admin` on the live site.
 
 Static-only hosts (Netlify, Vercel, GitHub Pages) can serve the site, but the CMS can't save on them.
 

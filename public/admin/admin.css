@@ -55,6 +55,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .icon.del:hover { color: var(--danger); }
 .icon.vis.off { color: #e0a33a; }
 .item.is-hidden > summary .thumb, .item.is-hidden > summary .sum-title > span:first-child, .item.is-hidden > summary .sum-sub { opacity: .45; }
+.import-status { margin-top: 12px; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
 .tab-count:not(:empty) { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; font-size: 10px; line-height: 18px; text-align: center; background: var(--teal); color: #000; font-weight: 800; }
 .inquiry-msg { display: grid; gap: 12px; }
 .inq-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }

@@ -269,6 +269,42 @@ async function handleApi(req, res, pathname) {
     return send(res, 200, { ok: true, path: publicDir + file });
   }
 
+  // Import: the CMS sends a storage folder from another copy of the site (e.g. your computer) one file at a time.
+  // Images and apps are copied as they are, content.json replaces the current content (the old one goes to
+  // backups/ first), and messages in inquiries.jsonl are added to the ones already here.
+  if (pathname === '/api/import' && req.method === 'POST') {
+    const { path: rel, data } = await readBody(req);
+    const clean = String(rel || '').replace(/\\/g, '/').replace(/^\/+/, '');
+    if (typeof data !== 'string') return send(res, 400, { error: 'No file data' });
+    const buf = Buffer.from(data, 'base64');
+    if (clean === 'content.json') {
+      let c;
+      try { c = JSON.parse(buf.toString('utf8')); } catch { return send(res, 400, { error: 'content.json is not valid JSON' }); }
+      const err = validateContent(c);
+      if (err) return send(res, 400, { error: `content.json: ${err}` });
+      writeContent(PS.ensureSlugs(c));
+      return send(res, 200, { ok: true });
+    }
+    if (clean === 'inquiries.jsonl') {
+      const have = new Set(readInquiries().map((x) => x.id));
+      const add = buf.toString('utf8').split('\n').filter(Boolean).filter((line) => {
+        try { const x = JSON.parse(line); return !have.has(x.id || crypto.createHash('sha1').update(line).digest('hex').slice(0, 12)); } catch { return false; }
+      });
+      if (add.length) fs.appendFileSync(INQUIRIES, add.join('\n') + '\n');
+      return send(res, 200, { ok: true, added: add.length });
+    }
+    const top = clean.split('/')[0];
+    if (!['apps', 'uploads'].includes(top) || clean.split('/').some((p) => !p || p === '.' || p === '..')) {
+      return send(res, 400, { error: `Not imported: ${clean}` });
+    }
+    const base = STORED[`/${top}/`];
+    const file = path.normalize(path.join(base, clean.slice(top.length + 1)));
+    if (!file.startsWith(base + path.sep)) return send(res, 400, { error: `Not imported: ${clean}` });
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, buf);
+    return send(res, 200, { ok: true });
+  }
+
   // contact-form messages for the CMS Inquiries tab, newest first
   if (pathname === '/api/inquiries' && req.method === 'GET') {
     return send(res, 200, { inquiries: readInquiries().reverse() });

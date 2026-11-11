@@ -501,7 +501,57 @@
       <div class="card"><h2>Contact</h2>
         ${field('Contact text', 'site.contactText', { placeholder: 'Collaborations, commissions or just saying hi — my DMs are open.' })}
         ${field('Email', 'site.email', { type: 'email', hint: 'optional' })}
+      </div>
+      <div class="card"><h2>Import content</h2>
+        <p class="hint" style="margin:-4px 0 14px">Copy everything from another copy of this site, for example your computer, onto this one: choose its <b>storage</b> folder. Posts, settings, images and apps are copied, and contact messages are added to the ones here. The current posts and settings are replaced; the previous version is kept in the backups.</p>
+        <span class="btn ghost sm upload-btn">Choose storage folder…<input type="file" id="import-folder" webkitdirectory directory multiple></span>
+        <div class="import-status" id="import-status"></div>
       </div>`;
+  }
+
+  // ---------------- import a storage folder ----------------
+  // The folder is sent one file at a time (images and apps first, content.json last), so a big folder
+  // never hits the upload size limit and the site only switches to the new content once its images are there.
+  async function importFolder(fileList) {
+    const status = $('#import-status');
+    const all = [...fileList];
+    // the folder that holds content.json is the storage folder, whichever folder was picked
+    const contentFile = all.filter((f) => /(^|\/)content\.json$/.test(f.webkitRelativePath))
+      .sort((a, b) => a.webkitRelativePath.split('/').length - b.webkitRelativePath.split('/').length)[0];
+    if (!contentFile) return toast('No content.json in that folder. Choose the folder named "storage".', true);
+    const root = contentFile.webkitRelativePath.replace(/content\.json$/, '');
+    const items = all.filter((f) => f.webkitRelativePath.startsWith(root)).map((f) => ({ f, rel: f.webkitRelativePath.slice(root.length) }))
+      .filter(({ rel }) => /^(apps|uploads)\//.test(rel) || rel === 'inquiries.jsonl' || rel === 'content.json');
+    const big = items.filter(({ f }) => f.size > 20 * 1024 * 1024);
+    const files = items.filter((x) => !big.includes(x)).sort((a, b) => (a.rel === 'content.json') - (b.rel === 'content.json'));
+    const mb = (files.reduce((n, { f }) => n + f.size, 0) / 1048576).toFixed(1);
+    const ok = await confirmDialog({
+      title: `Import ${files.length} files (${mb} MB)?`,
+      message: 'Your posts and settings here are replaced by the imported ones; the current version is saved in the backups first. Images, apps and contact messages are added. Keep this page open until it finishes.',
+      confirmLabel: 'Import',
+    });
+    if (!ok) return;
+    const failed = big.map(({ rel }) => `${rel} (over 20 MB)`);
+    let done = 0;
+    const send = async ({ f, rel }) => {
+      try { await api('/api/import', { method: 'POST', body: JSON.stringify({ path: rel, data: await fileToBase64(f) }) }); }
+      catch (err) { failed.push(`${rel}: ${err.message}`); }
+      done++;
+      status.textContent = `Importing… ${done} of ${files.length}`;
+    };
+    const rest = files.filter(({ rel }) => rel !== 'content.json');
+    for (let i = 0; i < rest.length; i += 3) await Promise.all(rest.slice(i, i + 3).map(send)); // 3 at a time
+    if (failed.some((x) => x.startsWith('uploads/') || x.startsWith('apps/')) && !confirm(`${failed.length} file(s) could not be imported. Replace the posts anyway?`)) {
+      status.textContent = `Stopped. Posts were not replaced. Not imported: ${failed.join(', ')}`;
+      return;
+    }
+    await send(files.find(({ rel }) => rel === 'content.json'));
+    status.textContent = failed.length ? `Finished, but not imported: ${failed.join(', ')}` : `Imported ${files.length} files.`;
+    toast(failed.length ? 'Import finished with some problems' : 'Import finished', failed.length ? 'warn' : false);
+    setDirty(false);
+    await boot(); // show the imported posts
+    tab = 'profile'; render();
+    $('#import-status').textContent = status.textContent;
   }
 
   // ---------------- events ----------------
@@ -549,6 +599,13 @@
   }, true);
 
   panel.addEventListener('change', async (e) => {
+    if (e.target.id === 'import-folder') {
+      const input = e.target;
+      if (dirty && !confirm('You have unsaved changes. They will be lost if you import now. Continue?')) { input.value = ''; return; }
+      try { await importFolder(input.files); } catch (err) { toast(err.message, true); }
+      input.value = '';
+      return;
+    }
     const many = e.target.closest('input[type=file][data-upload-many]');
     if (many && many.files.length) {
       const files = [...many.files].filter((f) => f.size <= 20 * 1024 * 1024);
